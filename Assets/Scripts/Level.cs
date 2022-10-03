@@ -13,7 +13,6 @@ public class Level : MonoBehaviour
 
     void Start()
     {
-        //player.transform.DOPath(this.path, 10f, PathType.Linear);
         StartCoroutine(PlayDelay());
     }
 

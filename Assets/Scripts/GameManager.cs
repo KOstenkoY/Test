@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using DG.Tweening;
-using UnityEngine.UIElements;
 
 public class GameManager : Singleton<GameManager>
 {
@@ -36,7 +35,8 @@ public class GameManager : Singleton<GameManager>
     public GameObject pausedUI;
     public GameObject WinMenu;
 
-    public Image blackSprite;
+    public GameObject dampingAnimation;
+
 
     void Awake() 
     {
@@ -45,16 +45,16 @@ public class GameManager : Singleton<GameManager>
     }
     public void StartGame()
     {
-        ShowUI(inGameUI);
+        ShowUI(pausedUI);
 
         number = Random.Range(0, scenes.Length);
 
-        _currentScene = Instantiate(scenes[0], Vector3.zero, this.transform.rotation);
+        _currentScene = Instantiate(scenes[number], Vector3.zero, this.transform.rotation);
 
         _currentScene.player = Instantiate(player, startPosition, this.transform.rotation);
 
         Instantiate(finish, finishPosition, this.transform.rotation);
-
+        Time.timeScale = 0.0f;
     }
     void ShowUI(GameObject newUI)
     {
@@ -80,12 +80,13 @@ public class GameManager : Singleton<GameManager>
         
         if (paused)
         {
-            //blackSprite.
+            dampingAnimation.SetActive(true);      //DoColor
             Time.timeScale = 0.0f;
         }
         else
         {
             Time.timeScale = 1.0f;
+            dampingAnimation.SetActive(false);
         }
     }
 
@@ -108,14 +109,24 @@ public class GameManager : Singleton<GameManager>
         }
     }
 
-    void CreatePlayer()
+    public void NewGame()
     {
         SceneManager.LoadScene("SampleScene");
     }
 
     public void Win()
     {
-        SetPaused(true);
+        Time.timeScale = 0.0f;
+        dampingAnimation.SetActive(true);
+        WinMenu.SetActive(true);
+    }
+
+    public void CreatePlayer()
+    {
+        _currentScene.player = Instantiate(player, startPosition, this.transform.rotation);
+        _currentScene.player.transform.DOPath(_currentScene.path, 10f, PathType.Linear);
+
+        Instantiate(finish, finishPosition, this.transform.rotation);
     }
 
     public void SetInvincible()
@@ -151,5 +162,10 @@ public class GameManager : Singleton<GameManager>
         Destroy(_currentDiePref);
 
         CreatePlayer();
+    }
+
+    public void Exit()
+    {
+        Application.Quit();
     }
 }
