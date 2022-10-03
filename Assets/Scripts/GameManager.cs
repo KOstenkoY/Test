@@ -1,8 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using DG.Tweening;
+using UnityEngine.UIElements;
 
-public class GameManager : MonoBehaviour
+public class GameManager : Singleton<GameManager>
 {
     public Level[] scenes;
 
@@ -12,23 +15,141 @@ public class GameManager : MonoBehaviour
     [SerializeField] Vector3 startPosition;
     [SerializeField] Vector3 finishPosition;
 
+    [SerializeField] Material baseColor;
+    [SerializeField] Material changeColor;
+
+    public GameObject diePrefab;
+
     private int number;
 
-    void Awake()
-    {
-        number = Random.Range(0, 10);
+    public bool playerInvincible { get; set; }
+    private float timeWithInvincible = 2.0f;
 
-        var _currentScene = Instantiate(scenes[number], Vector3.zero, this.transform.rotation);
+    private float delayBeforeRemoving = 1.0f;
+
+    private Coroutine coroutine;
+
+    Level _currentScene;
+    GameObject _currentDiePref;
+
+    public GameObject inGameUI;
+    public GameObject pausedUI;
+    public GameObject WinMenu;
+
+    public Image blackSprite;
+
+    void Awake() 
+    {
+        ShowMainMenu();
+
+    }
+    public void StartGame()
+    {
+        ShowUI(inGameUI);
+
+        number = Random.Range(0, scenes.Length);
+
+        _currentScene = Instantiate(scenes[0], Vector3.zero, this.transform.rotation);
 
         _currentScene.player = Instantiate(player, startPosition, this.transform.rotation);
 
         Instantiate(finish, finishPosition, this.transform.rotation);
 
     }
+    void ShowUI(GameObject newUI)
+    {
+        GameObject[] allUI = { inGameUI, pausedUI, WinMenu };
 
-    //void OnTriggerEnter(Collider other)
-    //{
+        foreach (GameObject UIToHide in allUI)
+        {
+            UIToHide.SetActive(false);
+        }
 
-    //}
+        newUI.SetActive(true);
+    }
 
+    void ShowMainMenu()
+    {
+        StartGame();
+    }
+
+    public void SetPaused(bool paused)
+    {
+        inGameUI.SetActive(!paused);
+        pausedUI.SetActive(paused);
+        
+        if (paused)
+        {
+            //blackSprite.
+            Time.timeScale = 0.0f;
+        }
+        else
+        {
+            Time.timeScale = 1.0f;
+        }
+    }
+
+    public void KillPlayer()
+    {
+        if(playerInvincible)
+        {
+
+        }
+        else
+        {
+            Vector3 spawnPosition = _currentScene.player.transform.position;
+            
+            Quaternion currentRotation = player.transform.rotation;
+
+            Destroy(_currentScene.player);
+
+            _currentDiePref = Instantiate(diePrefab, spawnPosition, currentRotation);
+            StartCoroutine(Die());
+        }
+    }
+
+    void CreatePlayer()
+    {
+        SceneManager.LoadScene("SampleScene");
+    }
+
+    public void Win()
+    {
+        SetPaused(true);
+    }
+
+    public void SetInvincible()
+    {
+        playerInvincible = true;
+        _currentScene.player.GetComponentInChildren<MeshRenderer>().material = changeColor;
+        coroutine = StartCoroutine(Invincible());
+    }
+
+    public void BreakInvincible()
+    {
+        if(coroutine == null)
+        {
+            return;
+        }
+
+        StopCoroutine(coroutine);
+
+        playerInvincible = false;
+
+        _currentScene.player.GetComponentInChildren<MeshRenderer>().material = baseColor;
+    }
+
+    IEnumerator Invincible()
+    {
+        yield return new WaitForSeconds(timeWithInvincible);
+        playerInvincible = false;
+    }
+
+    IEnumerator Die()
+    {
+        yield return new WaitForSeconds(delayBeforeRemoving);
+        Destroy(_currentDiePref);
+
+        CreatePlayer();
+    }
 }

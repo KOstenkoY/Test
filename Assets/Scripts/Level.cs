@@ -9,8 +9,6 @@ public class Level : MonoBehaviour
 
     public GameObject player;
 
-    public bool isActive;
-
     private float _delay = 2;
 
     void Start()
