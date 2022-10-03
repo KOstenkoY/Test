@@ -44,7 +44,7 @@ public static class MazeGenerator
     private static WallState[,] ApplyRecursiveBacktracker(WallState[,] maze, int width, int height)
     {
         // here we make changes
-        var rng = new System.Random(/*seed*/);
+        var rng = new System.Random();
         var positionStack = new Stack<Position>();
         var position = new Position { X = rng.Next(0, width), Y = rng.Next(0, height) };
 
@@ -69,6 +69,7 @@ public static class MazeGenerator
                 maze[nPosition.X, nPosition.Y] |= WallState.VISITED;
 
                 positionStack.Push(nPosition);
+                //Debug.Log(nPosition.X + " " + nPosition.Y);
             }
         }
 
